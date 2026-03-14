@@ -70,10 +70,37 @@ const upload = require('../utils/multer');
 const User = require('../model/user');
 
 // CREATE a new user
-router.post("/", upload.single('image'), async (req, res) => {
+// router.post("/", upload.single('image'), async (req, res) => {
+//   try {
+//     const result = await cloudinary.uploader.upload(req.file.path);
+
+//     const user = new User({
+//       name: req.body.name,
+//       price: req.body.price,
+//       description: req.body.description,
+//       avatar: result.secure_url,
+//       cloudinary_id: result.public_id,
+//     });
+
+//     await user.save();
+//     res.status(200).json(user);
+//   } catch (err) {
+//     console.error("POST /user error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+router.post("/", upload.single("image"), async (req, res) => {
   try {
+
+    // Check if file exists
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
+    }
+
+    // Upload image to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path);
 
+    // Create new document
     const user = new User({
       name: req.body.name,
       price: req.body.price,
@@ -83,10 +110,15 @@ router.post("/", upload.single('image'), async (req, res) => {
     });
 
     await user.save();
-    res.status(200).json(user);
+
+    return res.status(201).json(user);
+
   } catch (err) {
     console.error("POST /user error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      message: "Failed to create user",
+      error: err.message
+    });
   }
 });
 
